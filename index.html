@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Data Analytics Platform</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js for chart rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #e9f1f7 0%, #f0f4f8 100%);
+            color: #2d3748;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navbar Styling */
+        .navbar {
+            background: linear-gradient(to right, #1a3c5e, #2e4a6d);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .nav-links a {
+            color: #e2e8f0;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .nav-links a:hover, .nav-links a:focus {
+            background-color: #4da8da;
+            color: white;
+            outline: none;
+        }
+        .profile-dropdown {
+            position: relative;
+            cursor: pointer;
+        }
+        .profile-dropdown span {
+            font-size: 16px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #2e4a6d;
+            min-width: 150px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            z-index: 1;
+        }
+        .profile-dropdown:hover .dropdown-content,
+        .profile-dropdown:focus-within .dropdown-content {
+            display: block;
+        }
+        .dropdown-content a {
+            color: #e2e8f0;
+            padding: 10px 15px;
+            display: block;
+            text-decoration: none;
+        }
+        .dropdown-content a:hover {
+            background-color: #4da8da;
+        }
+
+        /* Container Layout */
+        .container {
+            display: flex;
+            margin-top: 60px;
+            min-height: calc(100vh - 60px);
+            transition: all 0.3s ease;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background: #2e4a6d;
+            color: white;
+            padding: 20px;
+            position: fixed;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            transition: width 0.3s ease;
+        }
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        .sidebar h3 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-toggle {
+            cursor: pointer;
+            padding: 5px;
+        }
+        .sidebar ul {
+            list-style: none;
+        }
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+        .sidebar ul li a {
+            color: #d1e0e8;
+            text-decoration: none;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .sidebar.collapsed ul li a span {
+            display: none;
+        }
+        .sidebar.collapsed ul li a i {
+            margin-right: 0;
+        }
+        .sidebar ul li a:hover, .sidebar ul li a:focus {
+            background: #4da8da;
+            color: white;
+            outline: none;
+        }
+
+        /* Main Content Styling */
+        .main-content {
+            margin-left: 260px;
+            flex-grow: 1;
+            padding: 30px;
+            transition: margin-left 0.3s ease;
+        }
+        .main-content.collapsed {
+            margin-left: 80px;
+        }
+        .main-content h2 {
+            font-size: 30px;
+            color: #1a3c5e;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .card h3 {
+            font-size: 20px;
+            color: #1a3c5e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        .card h3 i {
+            color: #4da8da;
+        }
+        .card p {
+            font-size: 14px;
+            color: #4a5568;
+            margin: 5px 0;
+            font-weight: 400;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+        }
+        .card canvas {
+            width: 100% !important;
+            height: 180px !important;
+        }
+        .chart-legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .chart-legend div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+        .chart-legend .active-cases::before,
+        .chart-legend .beds-occupied::before,
+        .chart-legend .covid-cases::before,
+        .chart-legend .doctors::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background-color: #4da8da;
+            border-radius: 2px;
+        }
+        .chart-legend .recovered::before,
+        .chart-legend .icu-availability::before,
+        .chart-legend .flu-cases::before,
+        .chart-legend .nurses::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background-color: #68d391;
+            border-radius: 2px;
+        }
+        .chart-legend .staff-on-duty::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background-color: #f6ad55;
+            border-radius: 2px;
+        }
+
+        /* Reports Section */
+        .reports-section {
+            display: none;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .report-table th, .report-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .report-table th {
+            background: #1a3c5e;
+            color: white;
+            font-weight: 600;
+        }
+        .report-table tr:hover {
+            background: #f7fafc;
+        }
+
+        /* Settings Section */
+        .settings-section {
+            display: none;
+        }
+        .settings-form {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        .settings-form label {
+            font-size: 16px;
+            color: #1a3c5e;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .settings-form input, .settings-form select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s ease;
+        }
+        .settings-form input:focus, .settings-form select:focus {
+            border-color: #4da8da;
+            outline: none;
+        }
+        .settings-form button {
+            background: #4da8da;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .settings-form button:hover, .settings-form button:focus {
+            background: #357abd;
+            transform: scale(1.05);
+            outline: none;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #1a3c5e;
+            color: #e2e8f0;
+            margin-top: 30px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            .nav-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .profile-dropdown .dropdown-content {
+                position: static;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="navbar" role="navigation" aria-label="Main navigation">
+        <h1>Healthcare Analytics</h1>
+        <div class="nav-links">
+            <a href="#dashboard" onclick="showSection('dashboard-section')" tabindex="0">Dashboard</a>
+            <a href="#reports" onclick="showSection('reports-section')" tabindex="0">Reports</a>
+            <a href="#settings" onclick="showSection('settings-section')" tabindex="0">Settings</a>
+            <div class="profile-dropdown" tabindex="0">
+                <span><i class="fas fa-user"></i> Admin</span>
+                <div class="dropdown-content" role="menu">
+                    <a href="#profile" tabindex="0">Profile</a>
+                    <a href="#logout" tabindex="0">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar" role="navigation" aria-label="Sidebar navigation">
+            <h3>Menu <i class="fas fa-bars sidebar-toggle" onclick="toggleSidebar()" tabindex="0" aria-label="Toggle sidebar"></i></h3>
+            <ul>
+                <li><a href="#patients" tabindex="0"><i class="fas fa-users"></i> <span>Patient Analytics</span></a></li>
+                <li><a href="#hospitals" tabindex="0"><i class="fas fa-hospital"></i> <span>Hospital Performance</span></a></li>
+                <li><a href="#trends" tabindex="0"><i class="fas fa-chart-line"></i> <span>Health Trends</span></a></li>
+                <li><a href="#predictions" tabindex="0"><i class="fas fa-brain"></i> <span>Predictive Insights</span></a></li>
+                <li><a href="#data-upload" tabindex="0"><i class="fas fa-upload"></i> <span>Upload Data</span></a></li>
+                <li><a href="#user-management" tabindex="0"><i class="fas fa-user-cog"></i> <span>User Management</span></a></li>
+                <li><a href="#notifications" tabindex="0"><i class="fas fa-bell"></i> <span>Notifications</span></a></li>
+                <li><a href="#support" tabindex="0"><i class="fas fa-headset"></i> <span>Support</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="dashboard-section">
+                <h2>Dashboard Overview</h2>
+                <div class="dashboard" role="region" aria-label="Dashboard statistics">
+                    <!-- Patient Statistics -->
+                    <div class="card patient-card">
+                        <h3><i class="fas fa-users"></i> Patient Statistics</h3>
+                        <div class="stats">
+                            <p><strong>Total Patients:</strong> 15,672</p>
+                            <p><strong>Active Cases:</strong> 4,890</p>
+                            <p><strong>Recovered:</strong> 10,782</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="patientChart" aria-label="Patient statistics chart"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="active-cases">Active Cases</div>
+                            <div class="recovered">Recovered</div>
+                        </div>
+                    </div>
+
+                    <!-- Hospital Utilization -->
+                    <div class="card">
+                        <h3><i class="fas fa-hospital"></i> Hospital Utilization</h3>
+                        <div class="stats">
+                            <p><strong>Beds Occupied:</strong> 82%</p>
+                            <p><strong>ICU Availability:</strong> 15%</p>
+                            <p><strong>Staff on Duty:</strong> 95%</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="utilizationChart" aria-label="Hospital utilization chart"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="beds-occupied">Beds Occupied</div>
+                            <div class="icu-availability">ICU Availability</div>
+                            <div class="staff-on-duty">Staff on Duty</div>
+                        </div>
+                    </div>
+
+                    <!-- Disease Trends -->
+                    <div class="card">
+                        <h3><i class="fas fa-chart-line"></i> Disease Trends</h3>
+                        <div class="stats">
+                            <p><strong>Top Condition:</strong> COVID-19 (2,345 cases)</p>
+                            <p><strong>Weekly Growth:</strong> +3.2%</p>
+                            <p><strong>Seasonal Flu:</strong> 1,890 cases</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendsChart" aria-label="Disease trends chart"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="covid-cases">COVID-19</div>
+                            <div class="flu-cases">Seasonal Flu</div>
+                        </div>
+                    </div>
+
+                    <!-- Predictive Analytics -->
+                    <div class="card">
+                        <h3><i class="fas fa-brain"></i> Predictive Analytics</h3>
+                        <div class="stats">
+                            <p><strong>Outbreak Risk:</strong> High</p>
+                            <p><strong>Predicted Cases:</strong> 780</p>
+                            <p><strong>Confidence:</strong> 87%</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="predictiveChart" aria-label="Predictive analytics chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Resource Allocation -->
+                    <div class="card">
+                        <h3><i class="fas fa-tools"></i> Resource Allocation</h3>
+                        <div class="stats">
+                            <p><strong>Ventilators:</strong> 45/60</p>
+                            <p><strong>Oxygen Supply:</strong> 78%</p>
+                            <p><strong>Medicines Stock:</strong> 92%</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="resourceChart" aria-label="Resource allocation chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Staff Performance -->
+                    <div class="card">
+                        <h3><i class="fas fa-user-md"></i> Staff Performance</h3>
+                        <div class="stats">
+                            <p><strong>Doctors:</strong> 120</p>
+                            <p><strong>Nurses:</strong> 340</p>
+                            <p><strong>Attendance Rate:</strong> 98%</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="staffChart" aria-label="Staff performance chart"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="doctors">Doctors</div>
+                            <div class="nurses">Nurses</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports-section" class="reports-section" role="region" aria-label="Reports">
+                <h2>Reports</h2>
+                <table class="report-table" aria-label="Healthcare reports table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Condition</th>
+                            <th>Cases</th>
+                            <th>Hospital</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2025-03-01</td>
+                            <td>COVID-19</td>
+                            <td>450</td>
+                            <td>City Hospital</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td>2025-03-02</td>
+                            <td>Flu</td>
+                            <td>320</td>
+                            <td>General Hospital</td>
+                            <td>Recovered</td>
+                        </tr>
+                        <tr>
+                            <td>2025-03-03</td>
+                            <td>Dengue</td>
+                            <td>150</td>
+                            <td>Rural Clinic</td>
+                            <td>Active</td>
+                        </tr>
+                        <tr>
+                            <td>2025-03-04</td>
+                            <td>Malaria</td>
+                            <td>90</td>
+                            <td>City Hospital</td>
+                            <td>Recovered</td>
+                        </tr>
+                        <tr>
+                            <td>2025-03-05</td>
+                            <td>Typhoid</td>
+                            <td>75</td>
+                            <td>General Hospital</td>
+                            <td>Active</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="settings-section" role="region" aria-label="Settings">
+                <h2>Settings</h2>
+                <form class="settings-form">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" value="admin" readonly aria-readonly="true">
+
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+                    <label for="theme">Theme</label>
+                    <select id="theme" name="theme" aria-label="Select theme">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="blue">Blue</option>
+                    </select>
+
+                    <label for="notifications">Enable Notifications</label>
+                    <input type="checkbox" id="notifications" name="notifications" checked aria-label="Toggle notifications">
+
+                    <button type="submit" aria-label="Save settings">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer" role="contentinfo">
+        <p>© 2025 Healthcare Data Analytics Platform. All rights reserved.</p>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Section Switching
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.main-content > div');
+            sections.forEach(section => section.style.display = 'none');
+            document.getElementById(sectionId).style.display = 'block';
+        }
+
+        // Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        }
+
+        // Show Dashboard by Default and Initialize Charts
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('dashboard-section');
+
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js failed to load. Ensure you have an internet connection.');
+                return;
+            }
+
+            // Patient Statistics Chart (Pie Chart)
+            const patientChartCtx = document.getElementById('patientChart').getContext('2d');
+            new Chart(patientChartCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Active Cases', 'Recovered'],
+                    datasets: [{
+                        data: [4890, 10782],
+                        backgroundColor: ['#4da8da', '#68d391'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1a3c5e' }
+                    }
+                }
+            });
+
+            // Hospital Utilization Chart (Doughnut Chart)
+            const utilizationChartCtx = document.getElementById('utilizationChart').getContext('2d');
+            new Chart(utilizationChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Beds Occupied', 'ICU Availability', 'Staff on Duty'],
+                    datasets: [{
+                        data: [82, 15, 95],
+                        backgroundColor: ['#4da8da', '#68d391', '#f6ad55'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1a3c5e' }
+                    }
+                }
+            });
+
+            // Disease Trends Chart (Bar Chart)
+            const trendsChartCtx = document.getElementById('trendsChart').getContext('2d');
+            new Chart(trendsChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['COVID-19', 'Seasonal Flu'],
+                    datasets: [{
+                        label: 'Cases',
+                        data: [2345, 1890],
+                        backgroundColor: ['#4da8da', '#68d391'],
+                        borderColor: ['#4da8da', '#68d391'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Number of Cases' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1a3c5e' }
+                    }
+                }
+            });
+
+            // Predictive Analytics Chart (Horizontal Bar Chart)
+            const predictiveChartCtx = document.getElementById('predictiveChart').getContext('2d');
+            new Chart(predictiveChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Predicted Cases', 'Confidence'],
+                    datasets: [{
+                        label: 'Value',
+                        data: [780, 87],
+                        backgroundColor: ['#4da8da', '#68d391'],
+                        borderColor: ['#4da8da', '#68d391'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Value' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1a3c5e' }
+                    }
+                }
+            });
+
+            // Resource Allocation Chart (Bar Chart)
+            const resourceChartCtx = document.getElementById('resourceChart').getContext('2d');
+            new Chart(resourceChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Ventilators Used', 'Ventilators Total', 'Oxygen Supply', 'Medicines Stock'],
+                    datasets: [{
+                        label: 'Value',
+                        data: [45, 60, 78, 92],
+                        backgroundColor: ['#4da8da', '#a0aec0', '#68d391', '#f6ad55'],
+                        borderColor: ['#4da8da', '#a0aec0', '#68d391', '#f6ad55'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Value' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1a3c5e' }
+                    }
+                }
+            });
+
+            // Staff Performance Chart (Pie Chart)
+            const staffChartCtx = document.getElementById('staffChart').getContext('2d');
+            new Chart(staffChartCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Doctors', 'Nurses'],
+                    datasets: [{
+                        data: [120, 340],
+                        backgroundColor: ['#4da8da', '#68d391'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1a3c5e' }
+                    }
+                }
+            });
+
+            // Keyboard Accessibility for Sidebar Toggle
+            document.querySelector('.sidebar-toggle').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleSidebar();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
