@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced AI Interview UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .typing::after {
+            content: '...';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex font-sans">
+    <!-- Sidebar -->
+    <aside class="w-1/5 bg-white p-6 shadow-lg flex flex-col">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <i class="fas fa-robot text-white text-xl"></i>
+            </div>
+            <h1 class="text-xl font-bold text-blue-600">Interviewer AI</h1>
+        </div>
+        <nav class="space-y-4">
+            <a href="#" class="flex items-center gap-2 p-3 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-folder"></i> My Applications
+            </a>
+            <a href="#" class="flex items-center gap-2 p-3 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-chart-bar"></i> Interview Stats
+            </a>
+            <a href="#" class="flex items-center gap-2 p-3 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-book"></i> Learning Resources
+            </a>
+            <a href="#" class="flex items-center gap-2 p-3 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </nav>
+        <div class="mt-auto">
+            <button id="darkModeToggle" class="w-full p-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col p-6">
+        <div class="bg-white rounded-xl shadow-xl p-8 flex-1 flex flex-col items-center justify-between">
+            <div class="w-full">
+                <h2 class="text-2xl font-semibold mb-4">Interview Progress</h2>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div id="progressBar" class="bg-blue-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+                <p id="progressText" class="text-sm text-gray-600 mt-2">0/5 questions completed</p>
+            </div>
+
+            <div class="text-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full animate-pulse mx-auto"></div>
+                <p id="statusText" class="mt-4 text-gray-700 font-medium">Click "Start Interview" to begin</p>
+                <div id="currentQuestion" class="mt-4 text-lg font-semibold text-gray-800 hidden"></div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+                <button id="startBtn" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                    <i class="fas fa-play mr-2"></i>Start Interview
+                </button>
+                <button id="speakBtn" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors hidden">
+                    <i class="fas fa-microphone mr-2"></i>Speak Answer
+                </button>
+                <button id="endBtn" class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors hidden">
+                    <i class="fas fa-stop mr-2"></i>End Interview
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Chat Section -->
+    <section class="w-1/3 bg-white p-6 shadow-lg flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold"><i class="fas fa-comments mr-2"></i>Conversation</h2>
+            <button id="clearChat" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div id="chatContainer" class="flex flex-col space-y-3 overflow-y-auto h-96 p-4 border rounded-lg bg-gray-50">
+            <div class="p-3 bg-gray-200 rounded-lg max-w-md self-start">Hello! Ready for your interview?</div>
+        </div>
+        <div class="mt-4 flex gap-2">
+            <input type="text" id="userInput" class="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                   placeholder="Type your response...">
+            <button id="sendBtn" class="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </section>
+
+    <script>
+        const questions = [
+            "Tell me about yourself and your experience.",
+            "What are your strengths and weaknesses?",
+            "Why do you want this position?",
+            "Describe a challenging situation at work and how you handled it.",
+            "Where do you see yourself in 5 years?"
+        ];
+        
+        let currentQuestionIndex = 0;
+        let isInterviewActive = false;
+        
+        // DOM Elements
+        const chatContainer = document.getElementById("chatContainer");
+        const userInput = document.getElementById("userInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const startBtn = document.getElementById("startBtn");
+        const speakBtn = document.getElementById("speakBtn");
+        const endBtn = document.getElementById("endBtn");
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
+        const statusText = document.getElementById("statusText");
+        const currentQuestion = document.getElementById("currentQuestion");
+        const clearChat = document.getElementById("clearChat");
+        const darkModeToggle = document.getElementById("darkModeToggle");
+
+        // Add Message Function
+        function addMessage(text, type) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `p-3 rounded-lg max-w-md ${type === 'user' ? 
+                'bg-blue-500 text-white self-end' : 'bg-gray-200 text-gray-900 self-start'}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Bot Reply with Typing Effect
+        function botReply(text) {
+            const typingDiv = document.createElement("div");
+            typingDiv.className = "p-3 bg-gray-200 rounded-lg max-w-md self-start typing";
+            typingDiv.textContent = "AI is typing";
+            chatContainer.appendChild(typingDiv);
+            
+            setTimeout(() => {
+                chatContainer.removeChild(typingDiv);
+                addMessage(text, 'bot');
+            }, 1500);
+        }
+
+        // Speech Recognition
+        function startListening() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            statusText.textContent = "Listening...";
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                addMessage(transcript, 'user');
+                handleAnswer(transcript);
+                statusText.textContent = "Processing your answer...";
+            };
+            
+            recognition.onerror = () => {
+                statusText.textContent = "Error with speech recognition. Please try again.";
+            };
+            
+            recognition.start();
+        }
+
+        // Handle User Answer
+        function handleAnswer(answer) {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                updateProgress();
+                setTimeout(() => {
+                    currentQuestion.textContent = questions[currentQuestionIndex];
+                    botReply("Great! Here's your next question: " + questions[currentQuestionIndex]);
+                    statusText.textContent = "Awaiting your response...";
+                }, 1000);
+            } else {
+                endInterview();
+                botReply("Thank you! The interview is complete. We'll review your responses.");
+            }
+        }
+
+        // Update Progress
+        function updateProgress() {
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${currentQuestionIndex + 1}/${questions.length} questions completed`;
+        }
+
+        // Start Interview
+        startBtn.onclick = () => {
+            isInterviewActive = true;
+            startBtn.classList.add("hidden");
+            speakBtn.classList.remove("hidden");
+            endBtn.classList.remove("hidden");
+            currentQuestion.classList.remove("hidden");
+            
+            currentQuestion.textContent = questions[0];
+            botReply("Let's begin! " + questions[0]);
+            statusText.textContent = "Awaiting your response...";
+            updateProgress();
+        };
+
+        // End Interview
+        function endInterview() {
+            isInterviewActive = false;
+            startBtn.classList.remove("hidden");
+            speakBtn.classList.add("hidden");
+            endBtn.classList.add("hidden");
+            currentQuestion.classList.add("hidden");
+            statusText.textContent = "Interview completed! Ready for another?";
+        }
+
+        endBtn.onclick = () => {
+            endInterview();
+            addMessage("Interview Ended.", "bot");
+        };
+
+        // Input Handling
+        sendBtn.onclick = () => {
+            if (userInput.value && isInterviewActive) {
+                addMessage(userInput.value, 'user');
+                handleAnswer(userInput.value);
+                userInput.value = '';
+            }
+        };
+
+        userInput.onkeydown = (event) => {
+            if (event.key === 'Enter' && userInput.value && isInterviewActive) {
+                addMessage(userInput.value, 'user');
+                handleAnswer(userInput.value);
+                userInput.value = '';
+            }
+        };
+
+        speakBtn.onclick = startListening;
+
+        // Clear Chat
+        clearChat.onclick = () => {
+            chatContainer.innerHTML = '<div class="p-3 bg-gray-200 rounded-lg max-w-md self-start">Hello! Ready for your interview?</div>';
+        };
+
+        // Dark Mode Toggle
+        darkModeToggle.onclick = () => {
+            document.body.classList.toggle('dark');
+            document.body.classList.toggle('bg-gray-900');
+            document.body.classList.toggle('text-white');
+            const sections = document.querySelectorAll('aside, main > div, section');
+            sections.forEach(section => {
+                section.classList.toggle('bg-gray-800');
+                section.classList.toggle('bg-white');
+            });
+        };
+    </script>
+</body>
+</html>
